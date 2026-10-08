@@ -1,0 +1,5 @@
+"type","dsi_mean","dsi_sd","dsir_mean","dsir_sd","pct_beta_neg"
+"stationary",30,6.5,9.7,4.4,48
+"level_shift",59.8,11.3,35.7,12.1,100
+"trend",66.5,10.9,35.9,11.8,100
+"hyperstable",66,11,38.6,13.7,100

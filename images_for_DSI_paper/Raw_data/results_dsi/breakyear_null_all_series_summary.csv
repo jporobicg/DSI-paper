@@ -1,0 +1,11 @@
+"quantity","value"
+"n_series",25
+"n_sims",2000
+"obs_max_same_year",8
+"obs_year_of_max",1987
+"obs_1987_count",8
+"null_mean_max",4.076
+"null_q95_max",6
+"null_q99_max",7
+"p_max_ge_obs",0.00249875062468766
+"p_1987_ge_obs",0.000499750124937531

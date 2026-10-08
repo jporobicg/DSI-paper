@@ -1,0 +1,10 @@
+"series_type","unit","bic_n_breaks","bic_break_years","ftest_break_years","bic_flags_1987","ftest_flags_1987"
+"RV_cpue","ANC",1,"2015","1987;2015",FALSE,TRUE
+"RV_cpue","CMA",1,"2004","2004",FALSE,FALSE
+"RV_cpue","DMF",1,"2004","1987;2004",FALSE,TRUE
+"RV_cpue","LPF",1,"1987","1987",TRUE,TRUE
+"RV_cpue","MPF",0,"","1983;1991",FALSE,FALSE
+"RV_cpue","NTU",2,"1987;2016","1987;2016",TRUE,TRUE
+"RV_cpue","SAR",3,"1987;2007;2018","1987;2007",TRUE,TRUE
+"RV_cpue","SCP",1,"1987","1987",TRUE,TRUE
+"RV_ecosystem_index","ecosystem",2,"1987;2016","1987;2016",TRUE,TRUE

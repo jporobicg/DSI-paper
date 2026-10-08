@@ -1,0 +1,14 @@
+"quantity","value"
+"n_breaks_reported",45
+"sig_raw_0.05",45
+"sig_BH_0.05",45
+"n_1987_breaks",8
+"n_1987_survive_FDR",8
+"eco_maxF_obs",41.531
+"eco_maxF_break_year",1987
+"eco_AR1null_p",0.025
+"eco_resid_rho1",0.741
+"eco_shift_prepost1987",-1.548
+"eco_shift_naiveOLS_p",2.888e-17
+"eco_shift_boot_lo",-1.814
+"eco_shift_boot_hi",-1.288

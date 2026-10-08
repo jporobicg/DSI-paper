@@ -1,0 +1,6 @@
+"start_year","source","change_type","rationale"
+1971,"baseline","reference","Current model uses per-species start (mostly 1971); full-history reference case."
+1977,"breakpoints_catch","fishery expansion","Upward breaks in total catch for many species mark the fishery expansion phase."
+1988,"breakpoints_RV_effort","ecosystem abundance","After the coherent 1987 downward break in RV CPUE (6/8 species), the RV ecosystem index, and total effort. Strongest structural-change candidate."
+2001,"thai_dof","assessment convention","Thai DOF assessment start used for several groups (LPF, MPF, NTU, SCP)."
+2016,"breakpoints_recent","recent regime","RV index and several catch/effort series break ~2015-2016; candidate current regime (short window, use with care)."
