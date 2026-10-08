@@ -55,7 +55,7 @@ col_up    <- "#D55E00"   # breakpoint: increase
 col_null  <- "#c3c2b7"   # null / stationary reference band
 col_comp  <- c(slope = "#0072B2", effort_contrast = "#56B4E9", cpue_contrast = "#009E73",
                sample_size = "#E69F00", catch_effort = "#CC79A7")
-col_period <- c(pre = "#9a9a9a", mid = "#56B4E9", recent = "#0072B2")
+col_period <- c(pre = "#9a9a9a", mid = "#56B4E9", recent = "#00467f")
 col_group  <- c(Anchovy = "#CC79A7", Demersal = "#E69F00", Pelagic = "#009E73")
 ink1 <- "#0b0b0b"; ink2 <- "#52514e"; ink3 <- "#898781"; grid_col <- "#e8e7e1"
 

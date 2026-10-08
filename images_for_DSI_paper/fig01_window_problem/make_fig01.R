@@ -1,121 +1,166 @@
-## Figure 1. Why the estimation window matters and what DSI / DSIr measure.
-## Inputs (../Raw_data): data_inputs/Thai_main_groups.csv (aggregated commercial
-## CPUE and effort), results_dsi/dsi_components_aggregated.csv (DSI and DSIr per
-## window, each group scored on its own effort), results_dsi/structural_breakpoints.csv
-## (the 1987 break of the RV ecosystem index).
+## Figure 1. The estimation-window problem: a conceptual schematic.
+##
+## ILLUSTRATIVE DATA ONLY. Every series in this figure is synthetic and generated
+## below from fixed formulas and a fixed random seed. No observed data, real years
+## or real species are used, and nothing is read from ../Raw_data.
+##
+## The synthetic system has 50 years and two structural breaks, after years 20 and 40:
+##   early  (years 1-20)   effort builds up and log(CPUE) falls steeply with effort
+##                         (a clear depletion signal with strong contrast);
+##   middle (years 21-40)  CPUE drops to a low, flat level while effort stays high and
+##                         fluctuates (CPUE responds only weakly to effort);
+##   recent (years 41-50)  effort is cut sharply and keeps falling, and CPUE partly
+##                         recovers (a third, different CPUE-effort relationship).
+## Three candidate windows, each ending in the final year: full history (years 1-50,
+## all three periods), post-break (21-50, two periods) and recent (41-50, one period).
+## Panel C uses made-up curves for the information / representativeness trade-off.
+##
 ## Run from this folder:  Rscript make_fig01.R
 ## Output: fig01_window_problem.{pdf,png,svg}
 
 source("../_common/theme_dsi.R")
-raw  <- read_csv("../Raw_data/data_inputs/Thai_main_groups.csv", show_col_types = FALSE)
-comp <- read_csv("../Raw_data/results_dsi/dsi_components_aggregated.csv", show_col_types = FALSE)
-brk  <- read_csv("../Raw_data/results_dsi/structural_breakpoints.csv", show_col_types = FALSE)
 
-break_year <- brk %>% filter(series_type == "RV_ecosystem_index", direction == "decrease") %>%
-  pull(break_year) %>% min()
-last_year <- max(raw$year)
-recent_start <- 2016L
+## ---- synthetic series -------------------------------------------------------------
+n_year  <- 50L
+break1  <- 20L             # last year of the early period
+break2  <- 40L             # last year of the middle period
+set.seed(20240601)         # fixed seed: the figure is identical on every run
+yr <- seq_len(n_year)
+e_noise <- rnorm(n_year, 0, 1.4)
+c_noise <- rnorm(n_year, 0, 0.06)
 
-## The three illustrative windows. Each colour is the colour of the years that
-## the window adds, so the window bars in A double as the key for A and B.
-windows <- tibble(window = c("Full history", "Post-1987", "Recent"),
-                  start  = c(min(raw$year[raw$group == "Demersal"]), break_year + 1L, recent_start),
+period <- case_when(yr <= break1 ~ "pre", yr <= break2 ~ "mid", TRUE ~ "recent")
+effort <- case_when(
+  period == "pre" ~ 5 + 23 * (yr - 1) / (break1 - 1),               # steady build-up
+  period == "mid" ~ 34 + 6 * sin((yr - break1) / 3),                # high, fluctuating
+  TRUE            ~ 19 - 1.2 * (yr - break2 - 1)) +                 # cut, then falling
+  e_noise
+log_cpue <- case_when(
+  period == "pre" ~ 4.45 - 0.028 * effort,                          # steep depletion
+  period == "mid" ~ 3.30 - 0.008 * effort,                          # low and flat
+  TRUE            ~ 3.95 - 0.045 * effort) +                        # partial recovery
+  c_noise
+syn <- tibble(year = yr, effort = effort, cpue = exp(log_cpue), period = period)
+
+## Candidate windows. Each bar has the colour of the years it adds, so the bars
+## double as the key for the points in A and B.
+windows <- tibble(window = c("Full history", "Post-break", "Recent"),
+                  start  = c(1L, break1 + 1L, break2 + 1L),
                   period = c("pre", "mid", "recent"))
-windows$label <- sprintf("%s  %d\u2013%d", windows$window, windows$start, last_year)
 win_levels <- windows$window
 
-dem <- raw %>% filter(group == "Demersal") %>% arrange(year) %>%
-  mutate(effort_m = effort / 1e6,
-         period = case_when(year <= break_year ~ "pre", year < recent_start ~ "mid", TRUE ~ "recent"))
-
-x_year <- scale_x_continuous(breaks = seq(1970, 2020, 10), limits = c(1969.5, last_year + 0.5),
+x_year <- scale_x_continuous(breaks = c(1, seq(10, 50, 10)), limits = c(0.5, n_year + 0.5),
                              expand = c(0, 0))
-v87 <- geom_vline(xintercept = break_year + 0.5, colour = col_break, linetype = "22", linewidth = 0.3)
+v_brk <- geom_vline(xintercept = c(break1, break2) + 0.5, colour = col_break,
+                    linetype = "22", linewidth = 0.3)
 no_x <- theme(axis.text.x = element_blank(), axis.title.x = element_blank(),
               axis.ticks.x = element_blank())
+no_y <- theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 
-## ---- A: the windows, demersal CPUE and effort ------------------------------------
-trk <- windows %>% mutate(y = factor(label, levels = rev(label)))
+## ---- A: the windows over a synthetic CPUE and effort series ------------------------
+trk <- windows %>% mutate(y = factor(window, levels = rev(window)))
 pA1 <- ggplot(trk) +
-  v87 +
-  geom_segment(aes(x = start - 0.4, xend = last_year + 0.4, y = y, yend = y, colour = period),
+  v_brk +
+  geom_segment(aes(x = start - 0.4, xend = n_year + 0.4, y = y, yend = y, colour = period),
                linewidth = 2.6, lineend = "butt") +
-  annotate("text", x = break_year + 0.9, y = 3.55, label = as.character(break_year), hjust = 0,
-           vjust = 0, size = pt(6.5), colour = ink1, family = base_family) +
+  annotate("text", x = c(break1, break2) + 0.9, y = 3.55, label = c("break 1", "break 2"),
+           hjust = 0, vjust = 0, size = pt(7), colour = ink1, family = base_family) +
   scale_colour_manual(values = col_period, guide = "none") +
   scale_y_discrete(expand = expansion(add = c(0.6, 0.9))) +
   x_year + coord_cartesian(clip = "off") +
   labs(y = NULL, tag = "A") + theme_dsi() + no_x +
   theme(panel.grid = element_blank(), axis.text.y = element_text(colour = ink1, size = 7))
 
-pA2 <- ggplot(dem, aes(year, cpue)) + v87 +
+pA2 <- ggplot(syn, aes(year, cpue)) + v_brk +
   geom_line(colour = ink3, linewidth = 0.35) +
   geom_point(aes(colour = period), size = 1.1) +
   scale_colour_manual(values = col_period, guide = "none") +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.08))) +
-  x_year + labs(y = "CPUE\n(kg per unit)") + theme_dsi() + no_x
+  x_year + labs(y = "CPUE") + theme_dsi() + no_x + no_y
 
-pA3 <- ggplot(dem, aes(year, effort_m)) + v87 +
+pA3 <- ggplot(syn, aes(year, effort)) + v_brk +
   geom_line(colour = ink3, linewidth = 0.35) +
   geom_point(aes(colour = period), size = 1.1) +
   scale_colour_manual(values = col_period, guide = "none") +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.08))) +
-  x_year + labs(x = "Year", y = "Effort\n(10\u2076 units)") + theme_dsi()
+  x_year + labs(x = "Year", y = "Effort") + theme_dsi() + no_y
 
 pA <- pA1 / pA2 / pA3 + plot_layout(heights = c(0.62, 1, 1))
 
-## ---- B: log(CPUE) against effort inside each window -----------------------------
+## ---- B: what each window "sees": log(CPUE) against effort --------------------------
 fits <- lapply(seq_len(nrow(windows)), function(k) {
-  d <- dem %>% filter(year >= windows$start[k], is.finite(cpue), cpue > 0, is.finite(effort))
-  m <- lm(log(cpue) ~ effort_m, data = d)
-  tibble(window = windows$window[k], d, fit = fitted(m), beta = coef(m)[["effort_m"]])
-}) %>% bind_rows() %>% mutate(window = factor(window, levels = win_levels))
-ann <- fits %>% distinct(window, beta) %>%
-  mutate(lab = paste0("\u03b2 = ", sub("-", "\u2212", sprintf("%.3f", beta))))
-pB <- ggplot(fits, aes(effort_m, log(cpue))) +
+  d <- syn %>% filter(year >= windows$start[k])
+  m <- lm(log(cpue) ~ effort, data = d)
+  grid <- tibble(effort = seq(min(d$effort), max(d$effort), length.out = 60))
+  pr <- predict(m, grid, interval = "confidence")
+  list(pts = mutate(d, window = windows$window[k]),
+       fit = mutate(grid, window = windows$window[k], fit = pr[, "fit"],
+                    lo = pr[, "lwr"], hi = pr[, "upr"]))
+})
+pts <- bind_rows(lapply(fits, `[[`, "pts")) %>% mutate(window = factor(window, win_levels))
+fit <- bind_rows(lapply(fits, `[[`, "fit")) %>% mutate(window = factor(window, win_levels))
+
+pB <- ggplot(pts, aes(effort, log(cpue))) +
+  geom_ribbon(data = fit, aes(x = effort, ymin = lo, ymax = hi), inherit.aes = FALSE,
+              fill = ink3, alpha = 0.22) +
+  geom_line(data = fit, aes(x = effort, y = fit), colour = ink1, linewidth = 0.5) +
   geom_point(aes(colour = period), size = 1.2, stroke = 0) +
-  geom_line(aes(y = fit), colour = ink1, linewidth = 0.5) +
-  geom_text(data = ann, aes(x = Inf, y = Inf, label = lab), hjust = 1.08, vjust = 1.4,
-            size = pt(6.5), colour = ink2, family = base_family, inherit.aes = FALSE) +
   facet_wrap(~ window, nrow = 1) +
   scale_colour_manual(values = col_period, guide = "none") +
-  scale_x_continuous(breaks = seq(10, 40, 10)) +
-  labs(x = "Effort (10\u2076 units)", y = "log CPUE", tag = "B") + theme_dsi() +
-  theme(panel.spacing.x = unit(3, "mm"))
+  labs(x = "Effort", y = "log CPUE", tag = "B") + theme_dsi() + no_y +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        panel.spacing.x = unit(3, "mm"))
 
-## ---- C: DSI and its robustness-adjusted version DSIr for each window --------------
-## "Full history" uses each group's first year (the anchovy series starts in 1972).
-first_year <- raw %>% group_by(group) %>% summarise(first = min(year), .groups = "drop")
-cw <- comp %>% filter(valid) %>% left_join(first_year, by = "group") %>%
-  mutate(window = case_when(start_year == first ~ "Full history",
-                            start_year == break_year + 1 ~ "Post-1987",
-                            start_year == recent_start ~ "Recent")) %>%
-  filter(!is.na(window)) %>%
-  mutate(window = factor(window, levels = rev(win_levels)),
-         group = factor(group, levels = names(group_labels)))
-keyC <- cw %>% filter(group == "Anchovy", window == "Full history") %>%
-  select(group, window, dsi, dsi_r)
-pC <- ggplot(cw, aes(y = window)) +
-  geom_segment(aes(x = dsi_r, xend = dsi, yend = window), colour = col_dsi, linewidth = 1.6,
-               alpha = 0.55) +
-  geom_point(aes(x = dsi), shape = 21, fill = "white", colour = col_dsi, size = 2.1, stroke = 0.9) +
-  geom_point(aes(x = dsi_r), shape = 16, colour = col_dsir, size = 2.1) +
-  geom_text(data = keyC, aes(x = dsi, label = "DSI"), vjust = -1.1, size = pt(6.5),
-            colour = "#3d74b8", family = base_family) +
-  geom_text(data = keyC, aes(x = dsi_r, label = "DSIr"), vjust = -1.1, size = pt(6.5),
-            colour = col_dsir, family = base_family) +
-  facet_wrap(~ group, nrow = 1, labeller = labeller(group = group_labels)) +
-  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 25), expand = expansion(add = 2)) +
-  scale_y_discrete(expand = expansion(add = c(0.45, 0.75))) +
+## ---- C: conceptual trade-off along the window start year ---------------------------
+## Made-up curves. Information (contrast and length) falls as the window shortens,
+## slowly at first and quickly for short windows. Representativeness of the current
+## system steps up after each break: low while the window still includes the early
+## period, intermediate while it includes the middle period, high once it holds only
+## the recent period. Suitability is their product. Each curve is scaled to its own
+## maximum, so only the shapes and the location of the peak carry meaning.
+s <- seq(1, 46, by = 0.05)
+info <- 1 - ((s - 1) / n_year)^1.6
+repr <- case_when(s <= break1 + 0.5 ~ 0.12 + 0.18 * (s - 1) / (break1 - 1),
+                  s <= break2 + 0.5 ~ 0.50 + 0.15 * (s - break1 - 1) / (break2 - break1 - 1),
+                  TRUE              ~ 1)
+suit <- info * repr; suit <- suit / max(suit)
+crv <- tibble(s = s, Informative = info, Representative = repr, Suitable = suit) %>%
+  pivot_longer(-s, names_to = "curve", values_to = "v") %>%
+  mutate(curve = factor(curve, c("Informative", "Representative", "Suitable")))
+## the diamond marks the best whole-year start (window starts are whole years)
+peak <- crv %>% filter(curve == "Suitable", abs(s - round(s)) < 1e-9) %>%
+  slice_max(v, n = 1, with_ties = FALSE)
+lab_at <- tibble(curve = factor(c("Informative", "Representative", "Suitable"), levels(crv$curve)),
+                 s = c(3, 3, 27)) %>%
+  left_join(crv %>% mutate(s = round(s, 2)), by = c("curve", "s")) %>%
+  mutate(vjust = c(-0.8, 1.9, -0.9))
+c_col <- c(Informative = "#3d74b8", Representative = ink3, Suitable = ink1)
+c_lty <- c(Informative = "solid", Representative = "22", Suitable = "solid")
+c_lwd <- c(Informative = 0.6, Representative = 0.6, Suitable = 1.0)
+
+pC <- ggplot(crv, aes(s, v)) +
+  v_brk +
+  geom_line(aes(colour = curve, linetype = curve, linewidth = curve)) +
+  geom_text(data = lab_at, aes(label = curve, colour = curve, vjust = vjust), hjust = 0,
+            size = pt(7), family = base_family) +
+  geom_point(data = windows, aes(x = start, y = -0.06, colour = period), inherit.aes = FALSE,
+             shape = 17, size = 1.9) +
+  geom_point(data = peak, shape = 23, fill = "#009E73", colour = "white", size = 2.6,
+             stroke = 0.5) +
+  scale_colour_manual(values = c(c_col, col_period), guide = "none") +
+  scale_linetype_manual(values = c_lty, guide = "none") +
+  scale_linewidth_manual(values = c_lwd, guide = "none") +
+  scale_x_continuous(breaks = c(1, seq(10, 50, 10)), limits = c(0.5, n_year + 0.5),
+                     expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-0.1, 1.12), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
-  labs(x = "Index score (0\u2013100)", y = NULL, tag = "C") + theme_dsi() +
-  theme(panel.grid.major.y = element_blank(), axis.text.y = element_text(colour = ink1, size = 7),
-        panel.spacing.x = unit(5, "mm"))
+  labs(x = "First year of window", y = "Relative value", tag = "C") + theme_dsi() + no_y +
+  theme(panel.grid.major.y = element_blank())
 
 ## ---- assemble --------------------------------------------------------------------
-fig <- (wrap_elements(full = pA) | pB) / pC +
-  plot_layout(heights = c(2.1, 1)) &
+right <- pB / pC + plot_layout(heights = c(1, 1.05))
+fig <- (wrap_elements(full = pA) | wrap_elements(full = right)) +
+  plot_layout(widths = c(1, 1.15)) &
   theme(plot.tag.position = c(0, 1))
-fig[[1]] <- fig[[1]] + plot_layout(widths = c(1, 1.15))
-save_fig(fig, "fig01_window_problem", width_mm = 190, height_mm = 112)
-cat("Figure 1 written.\n")
+save_fig(fig, "fig01_window_problem", width_mm = 190, height_mm = 100)
+cat(sprintf("Figure 1 written (suitability peaks at window start %.2f).\n", peak$s))

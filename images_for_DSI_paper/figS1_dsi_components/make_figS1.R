@@ -1,5 +1,6 @@
 ## Figure S1. How DSI is built from its weighted components and discounted to DSIr,
-## for the three illustrative windows of Figure 1 in each aggregated group.
+## for three illustrative windows (full history, post-1987, recent 2016) in each
+## aggregated group.
 ## Inputs (../Raw_data): results_dsi/dsi_components_aggregated.csv,
 ## data_inputs/Thai_main_groups.csv, results_dsi/structural_breakpoints.csv.
 ## Run from this folder:  Rscript make_figS1.R
