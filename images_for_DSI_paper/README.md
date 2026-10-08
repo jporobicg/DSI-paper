@@ -17,13 +17,13 @@ redesign/
   run_all.sh                   rebuilds every figure and refreshes review/
   _common/theme_dsi.R          palette, scenario encoding, theme, save_fig()
   Raw_data/                    every input the scripts read (unchanged copy)
-  fig01_window_problem/        make_fig01.R, caption.md, fig01_window_problem.{pdf,png,svg}
+  fig01_window_problem/        make_fig01.R, ...   (conceptual schematic, synthetic data only)
   fig02_structural_change/     make_fig02.R, ...
   fig03_dsi_screening/         make_fig03.R, ...
   fig04_window_consequences/   make_fig04.R, ...
   fig05_retrospective/         make_fig05.R, ...   (was the top half of the old Fig. 5)
   fig06_startyear_scan/        make_fig06.R, ...   (was panel C of the old Fig. 5)
-  figS1_dsi_components/        make_figS1.R, ...   (was panel C of the old Fig. 1)
+  figS1_dsi_components/        make_figS1.R, ...   (DSI components; replaces the real-data DSI panel of the old Fig. 1)
   figS2_rv_cpue_breaks/        make_figS2.R, ...   (RV CPUE series with breakpoints)
   review/                      figNN_final.png copies of the final PNGs
 ```
@@ -36,9 +36,10 @@ cd fig03_dsi_screening && Rscript make_fig03.R   # one figure
 ```
 
 Each script runs from its own folder, reads only `../Raw_data` and
-`../_common/theme_dsi.R`, and writes a cairo PDF (fonts embedded), a 300 dpi PNG and
-an SVG. Tested with R 4.x, ggplot2 3.5.1, patchwork 1.3.0, ragg and svglite. The
-font is Liberation Sans (metric-compatible with Arial); install
+`../_common/theme_dsi.R`, and writes a cairo PDF (fonts embedded), a 300 dpi PNG
+and an SVG. Fig. 1 reads no data: its series are synthetic and generated inside
+`make_fig01.R` from fixed formulas and a fixed seed. Tested with R 4.x, ggplot2
+3.5.1, patchwork 1.3.0, ragg and svglite. The font is Liberation Sans (metric-compatible with Arial); install
 `fonts-liberation` if it is missing.
 
 ## Graphical conventions
@@ -74,13 +75,13 @@ choices are worth knowing:
 
 | New figure | What changed and why |
 |---|---|
-| **Fig. 1** Window problem | (A) The window labels no longer sit on the CPUE series: the windows are drawn as a separate track above it. Each bar has the colour of the years it adds, which also colours the points in A and B, so no legend is needed (this also removes the out-of-order legend). (B) β is kept as a single short label per window; the p and n blocks are gone (n is visible from the points). (C) The 3 × 3 stacked-bar grid, value labels, subtitle and 5-item legend are replaced by one DSI–DSIr dumbbell per window and group. That carries the message of Methods §2.2 that DSIr discounts fragile windows. The component breakdown moved to Fig. S1, because the paper describes the weights in the Methods but never discusses the breakdown. |
+| **Fig. 1** Window problem | Redrawn as a conceptual schematic with synthetic series (fixed formulas and a fixed seed; no real data, years or species), so that the motivating figure no longer previews the results in Figs 3–6. (A) A 50-year synthetic CPUE and effort series with two structural breaks (after years 20 and 40) separating three periods: early (grey), middle (light blue) and recent (dark blue). The three candidate windows (full history, post-break, recent) are a separate track above it; each bar has the colour of the period it adds, which also colours the points in A and B, so no legend is needed. (B) log(CPUE) against effort inside each window, with the least-squares line and 95% band: each period has its own relationship, so the full history mixes three, the post-break window two, and the recent window one but with only ten years. Mixed windows still show the contrast and slope that DSI rewards. (C) Made-up curves for the information versus representativeness trade-off along the window start year: representativeness steps up after each break, and the suitable window (product of the two) is marked by a green diamond where the product peaks (the first year after break 1 in this example), as the DSIr optimum is in Fig. 3. The recent-period colour in `col_period` (`_common/theme_dsi.R`, used only by Fig. 1) was darkened to #00467f so the three periods are easy to tell apart. No β values, years or scores are printed; the explanation is in the caption. The real-data panels of the previous version were dropped: the demersal CPUE/effort and β panels have no counterpart elsewhere and are not needed for the argument, and the DSI–DSIr comparison for the same three real windows is already in Fig. S1. |
 | **Fig. 2** Structural change | (A) The level-shift, bootstrap and F-statistic text moved to the caption; only the "1987", "2016" and "no survey" labels remain. (B) Composition is merged into the catch block, so there are three blocks instead of four. Block names are rotated strips instead of wide bold labels, rows are tighter, and tiles became up/down triangles that encode direction by shape as well as colour. (C) The two annotations became one short line label ("95% of null maxima"); the 1987 bar is highlighted. Height went from 170 to 142 mm. |
 | **Fig. 3** DSI screening | The three-line footnote and both in-panel notes moved to the caption. DSI and DSIr are labelled directly once (panel A). Candidate start years are labelled once, on the top axis of A. The level-shift/trend band was removed because it sat on top of the blue DSI shading; it is now quoted in the caption, and only the no-signal band remains (labelled once). DOF start and DSIr optimum share a one-line key. The panels are now separate plots with the standard tags, and D aligns with A–C. |
 | **Fig. 4** Window consequences | Panel titles are shortened. Group names appear once. Windows are slightly offset within each group, over a shaded range bar, so coincident estimates no longer hide one another. The 7-window legend is one merged two-row key under the figure, ordered by family. C's axis title now sits under its own panels. |
 | **Fig. 5** Retrospective, fit, hindcast | Split from the old Fig. 5. (A) The four retrospective panels are wider; "peels" and "all data" are labelled directly. (B) The Mohn's ρ heatmap has scenario symbols matching Fig. 4 and white text on saturated cells. (C) The mean-|ρ| columns became bars aligned with the heatmap rows, joined by the in-sample log RMSE on 2016–2023 and the one-year hindcast MASE. The paper's in-sample-fit figure (`scenario_skill.png`) had no counterpart in the original package; this panel replaces it with the corrected numbers. |
 | **Fig. 6** Start-year scan | Split from the old Fig. 5C. The three panel titles and three legends are replaced by y-axis titles and line-end labels. The unexplained orange chevrons are now crosses above panel A with a direct label ("non-PD Hessian"; at least one fit at that floor lacked a positive-definite Hessian). |
-| **Fig. S1** DSI components | The component breakdown from the old Fig. 1C, cleaned up: no value labels or subtitle, DSI tick and DSIr diamond in the key. Optional supplement. |
+| **Fig. S1** DSI components | The component breakdown from the old Fig. 1C, cleaned up: no value labels or subtitle, DSI tick and DSIr diamond in the key. Since Fig. 1 is now conceptual, this is the only figure that shows DSI and DSIr for the full-history, post-1987 and recent (2016) windows. Optional supplement. |
 | **Fig. S2** RV CPUE breaks | New small-multiple of the RV CPUE series with their breakpoints. It supports the paper's current Figure `fig:rvcpue`, which Fig. 2B summarises but does not show. Optional supplement. |
 
 ### Merge and split decisions
@@ -91,7 +92,11 @@ choices are worth knowing:
   floor against DSIr, which bears on the Discussion paragraph about whether DSI/DSIr
   and the RV breaks "point to the same period". The paper does not yet describe the
   scan (see notes below), so Fig. 6 could also go to the supplement.
-* **Old Fig. 1C moved to the supplement (Fig. S1)**; Fig. 1C keeps only DSI vs DSIr.
+* **Fig. 1 is now a conceptual schematic with synthetic data.** The real-data
+  version previewed the results (DSI and DSIr scores, fitted slopes) before the
+  Methods. The old Fig. 1C component breakdown, including DSI vs DSIr for the three
+  real windows, is in the supplement (Fig. S1); the real CPUE/effort and β panels
+  were dropped.
 * **Fig. S2 added** so that the paper's RV-CPUE-by-species figure (`fig:rvcpue`)
   still has a counterpart; it can be dropped if Fig. 2B is judged sufficient.
 * Main-text count: 6 figures (the current .tex has 7 figure environments).
@@ -103,7 +108,7 @@ The .tex currently includes figures from `../Figures/DSI/` and
 
 | New figure | Replaces / supports in `paper.tex` | Label | Section |
 |---|---|---|---|
-| Fig. 1 | No current figure. Supports the DSI description and the "which years" question | (new, e.g. `fig:window`) | §1 Introduction (last paragraphs), §2.2 DSI |
+| Fig. 1 | No current figure. Conceptual schematic (synthetic data) of the "which years" question and of what DSI/DSIr and the breakpoint analysis each screen | (new, e.g. `fig:window`) | §1 Introduction (last paragraphs), §2.2 DSI, §2.4 Candidate windows |
 | Fig. 2A | `../Figures/DSI/rv_ecosystem_index_breakpoints.png` | `fig:rvindex` | §3.1 |
 | Fig. 2C | `../Figures/DSI/breakpoint_year_histogram.png` | `fig:hist` | §3.1 |
 | Fig. 2B (+ Fig. S2) | `../Figures/DSI/rv_cpue_breakpoints.png` | `fig:rvcpue` | §3.1 |
